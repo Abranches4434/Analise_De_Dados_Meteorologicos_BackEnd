@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time, timezone
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, model_validator
@@ -44,8 +44,20 @@ class RegistrosClimaticosRequestDTO(BaseModel):
                 "A temperatura média deve estar entre a temperatura mínima e a máxima!"
             )
 
-        if self.Data > date.today():
+        momento = datetime.combine(self.Data, self.Hora)
+
+        if momento.tzinfo is None:
+            momento = momento.replace(tzinfo=timezone.utc)
+        else:
+            momento = momento.astimezone(timezone.utc)
+
+        agora = datetime.now(timezone.utc)
+
+        if momento.date() > agora.date():
             raise ValueError("A data do registro não pode ser futura!")
+
+        if momento > agora:
+            raise ValueError("O horário do registro não pode ser futuro!")
 
         return self
 
