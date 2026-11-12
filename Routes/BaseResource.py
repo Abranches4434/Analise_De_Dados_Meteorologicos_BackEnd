@@ -9,6 +9,7 @@ from Exception.exception import (
     ElementoComDependenciasException,
     ElementoNaoEncontradoException,
 )
+from Exception.validation import formatar_erro_validacao
 
 
 class BaseResource(Resource):
@@ -73,7 +74,9 @@ class BaseResource(Resource):
                 return resultado.model_dump(mode="json"), status
 
             return resultado, status
-        except (ValidationError, ValueError) as erro:
+        except ValidationError as erro:
+            return {"erro": formatar_erro_validacao(erro)}, 400
+        except ValueError as erro:
             return {"erro": str(erro)}, 400
         except ElementoNaoEncontradoException as erro:
             return {"erro": str(erro)}, 404
@@ -96,7 +99,9 @@ class BaseResource(Resource):
                     )
                 },
             )
-        except (ValidationError, ValueError) as erro:
+        except ValidationError as erro:
+            return {"erro": formatar_erro_validacao(erro)}, 400
+        except ValueError as erro:
             return {"erro": str(erro)}, 400
         except ElementoNaoEncontradoException as erro:
             return {"erro": str(erro)}, 404
