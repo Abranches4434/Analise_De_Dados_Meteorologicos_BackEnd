@@ -2,6 +2,8 @@ from flask_restful import Api
 
 from Routes.Resources import (
     ComparacaoResource,
+    CoordenadasLocalidadeResource,
+    EnderecoLocalidadeResource,
     EstatisticasResource,
     EventosExtremosResource,
     ExportacaoResource,
@@ -22,6 +24,14 @@ def registrar_recursos(app):
     api.add_resource(HealthResource, "/health")
 
     api.add_resource(LocalidadesResource, "/localidades")
+    api.add_resource(
+        CoordenadasLocalidadeResource,
+        "/localidades/coordenadas",
+    )
+    api.add_resource(
+        EnderecoLocalidadeResource,
+        "/localidades/coordenadas/reversa",
+    )
     api.add_resource(LocalidadeResource, "/localidades/<int:id>")
 
     api.add_resource(RegistrosResource, "/registros")

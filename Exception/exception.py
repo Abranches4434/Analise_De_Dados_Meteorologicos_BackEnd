@@ -6,3 +6,6 @@ class ElementoCadastrado(Exception):
 
 class ElementoComDependenciasException(Exception):
     pass
+
+class ServicoExternoIndisponivelException(Exception):
+    pass

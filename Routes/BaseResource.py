@@ -8,6 +8,7 @@ from Exception.exception import (
     ElementoCadastrado,
     ElementoComDependenciasException,
     ElementoNaoEncontradoException,
+    ServicoExternoIndisponivelException,
 )
 from Exception.validation import formatar_erro_validacao
 
@@ -84,6 +85,8 @@ class BaseResource(Resource):
             return {"erro": str(erro)}, 409
         except ElementoComDependenciasException as erro:
             return {"erro": str(erro)}, 409
+        except ServicoExternoIndisponivelException as erro:
+            return {"erro": str(erro)}, 503
         except Exception as erro:
             return {"erro": str(erro)}, 500
 
@@ -105,5 +108,7 @@ class BaseResource(Resource):
             return {"erro": str(erro)}, 400
         except ElementoNaoEncontradoException as erro:
             return {"erro": str(erro)}, 404
+        except ServicoExternoIndisponivelException as erro:
+            return {"erro": str(erro)}, 503
         except Exception as erro:
             return {"erro": str(erro)}, 500

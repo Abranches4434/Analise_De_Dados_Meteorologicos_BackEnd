@@ -28,6 +28,8 @@ class TestInicializacaoAPI(unittest.TestCase):
             {
                 "/health",
                 "/localidades",
+                "/localidades/coordenadas",
+                "/localidades/coordenadas/reversa",
                 "/localidades/<int:id>",
                 "/registros",
                 "/registros/<int:id>",
@@ -43,6 +45,11 @@ class TestInicializacaoAPI(unittest.TestCase):
 
         self.assertEqual(rotas["/health"], {"GET"})
         self.assertEqual(rotas["/localidades"], {"GET", "POST"})
+        self.assertEqual(rotas["/localidades/coordenadas"], {"GET"})
+        self.assertEqual(
+            rotas["/localidades/coordenadas/reversa"],
+            {"GET"},
+        )
         self.assertEqual(rotas["/localidades/<int:id>"], {"GET", "PUT", "DELETE"})
         self.assertEqual(rotas["/registros"], {"GET", "POST"})
         self.assertEqual(rotas["/registros/<int:id>"], {"GET", "PUT", "DELETE"})

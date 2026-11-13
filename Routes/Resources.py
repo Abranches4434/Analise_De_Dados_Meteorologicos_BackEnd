@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Resource
 
 from Controller.AnaliseController import AnaliseController
+from Controller.GeocodificacaoController import GeocodificacaoController
 from Controller.LocalidadesController import LocalidadesController
 from Controller.RegistrosClimaticosController import (
     RegistrosClimaticosController,
@@ -51,6 +52,34 @@ class LocalidadeResource(BaseResource):
         return self._executar(
             lambda: self._controller.excluir(id),
             status=204,
+        )
+
+
+class CoordenadasLocalidadeResource(BaseResource):
+
+    def __init__(self):
+        self._controller = GeocodificacaoController()
+
+    def get(self):
+        return self._executar(
+            lambda: self._controller.buscar_coordenadas(
+                request.args.get("cidade"),
+                request.args.get("estado"),
+            )
+        )
+
+
+class EnderecoLocalidadeResource(BaseResource):
+
+    def __init__(self):
+        self._controller = GeocodificacaoController()
+
+    def get(self):
+        return self._executar(
+            lambda: self._controller.buscar_endereco(
+                request.args.get("latitude"),
+                request.args.get("longitude"),
+            )
         )
 
 
