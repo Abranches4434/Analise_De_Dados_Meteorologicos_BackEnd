@@ -477,5 +477,130 @@ class TestSemanticaEventosECRUD(BancoPostgreSQLTestCase):
         self.assertFalse(inativos[0]["Ativo"])
 
 
+class TestAnalisesIgnoramLocalidadesInativas(BancoPostgreSQLTestCase):
+
+    def setUp(self):
+        resetar_banco(app, db)
+
+        self.ativa_id = self._criar_localidade(
+            "Localidade Ativa",
+            -23.0,
+            -46.0,
+        )
+        self.inativa_id = self._criar_localidade(
+            "Localidade Inativa",
+            -22.0,
+            -45.0,
+        )
+
+        self._criar_registro(self.ativa_id, temp_max=30.0)
+        self._criar_registro(self.inativa_id, temp_max=45.0)
+
+        resposta = self.client.delete(
+            f"/localidades/{self.inativa_id}"
+        )
+        self.assertEqual(resposta.status_code, 204)
+
+    def _criar_localidade(self, nome, latitude, longitude):
+        resposta = self.client.post(
+            "/localidades",
+            json={
+                "Nome": nome,
+                "Cidade": "Teste",
+                "Estado": "SP",
+                "Latitude": latitude,
+                "Longitude": longitude,
+                "Ativo": True,
+            },
+        )
+
+        self.assertEqual(resposta.status_code, 201)
+        return resposta.get_json()["IDLocalidade"]
+
+    def _criar_registro(self, localidade_id, temp_max):
+        resposta = self.client.post(
+            "/registros",
+            json={
+                "TempMax": temp_max,
+                "TempMin": 20.0,
+                "TempMedia": (temp_max + 20.0) / 2,
+                "UmidadeRelativa": 60.0,
+                "Precipitacao": 0.0,
+                "VelocidadeVento": 10.0,
+                "PressaoAtmosferica": 1013.0,
+                "Data": "2025-01-01",
+                "Hora": "12:00:00",
+                "Ativo": True,
+                "FKLocalidade": localidade_id,
+            },
+        )
+
+        self.assertEqual(resposta.status_code, 201)
+
+    def test_estatisticas_de_todas_as_localidades_ignoram_inativas(self):
+        dados = self.client.get("/analises/estatisticas").get_json()
+
+        self.assertEqual(dados["Nome"], "Todas as localidades")
+        self.assertEqual(dados["QuantidadeRegistros"], 1)
+        self.assertTrue(
+            all(
+                estatistica["Quantidade"] == 1
+                for estatistica in dados["Estatisticas"]
+            )
+        )
+
+    def test_sazonalidade_de_todas_as_localidades_ignora_inativas(self):
+        dados = self.client.get(
+            "/analises/sazonalidade",
+            query_string={"agrupamento": "mes"},
+        ).get_json()
+
+        self.assertEqual(
+            sum(grupo["Quantidade"] for grupo in dados["Grupos"]),
+            1,
+        )
+
+    def test_exportacao_de_estatisticas_ignora_inativas(self):
+        resposta = self.client.get("/exportacoes/estatisticas")
+
+        self.assertEqual(resposta.status_code, 200)
+
+        leitor = csv.DictReader(
+            io.StringIO(resposta.data.decode("utf-8-sig")),
+            delimiter=";",
+        )
+        linhas = list(leitor)
+
+        self.assertEqual(len(linhas), 7)
+
+        temp_max = next(
+            linha
+            for linha in linhas
+            if linha["Variavel"] == "TempMax"
+        )
+
+        self.assertEqual(temp_max["Nome"], "Todas as localidades")
+        self.assertEqual(float(temp_max["Maximo"]), 30.0)
+
+    def test_analise_de_localidade_inativa_retorna_vazio(self):
+        resposta = self.client.get(
+            "/analises/estatisticas",
+            query_string={"localidade_id": self.inativa_id},
+        )
+
+        self.assertEqual(resposta.status_code, 200)
+
+        dados = resposta.get_json()
+
+        self.assertEqual(dados["QuantidadeRegistros"], 0)
+        self.assertEqual(dados["Estatisticas"], [])
+
+    def test_listagem_de_registros_ignora_localidades_inativas(self):
+        registros = self.client.get("/registros").get_json()
+
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(registros[0]["FKLocalidade"], self.ativa_id)
+
+
 if __name__ == "__main__":
     unittest.main()

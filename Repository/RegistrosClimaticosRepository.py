@@ -1,6 +1,7 @@
 from datetime import date, time
 
 from Entity import db
+from Entity.Localidades import Localidades
 from Entity.RegistrosClimaticos import RegistrosClimaticos
 from Repository.BaseRepository import BaseRepository
 
@@ -20,7 +21,12 @@ class RegistrosClimaticosRepository(BaseRepository):
         consulta = db.select(RegistrosClimaticos)
 
         if not incluir_inativos:
-            consulta = consulta.where(RegistrosClimaticos.Ativo.is_(True))
+            consulta = consulta.where(
+                RegistrosClimaticos.Ativo.is_(True),
+                RegistrosClimaticos.localidade.has(
+                    Localidades.Ativo.is_(True)
+                ),
+            )
 
         if data_inicio is not None:
             consulta = consulta.where(
